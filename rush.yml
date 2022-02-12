@@ -6,8 +6,8 @@ name: Ai2Tools
 description: Extension component for Ai2Tools. Created using Rush.
 
 version:
-  number: 2
-  name: '1.1'
+  number: 3
+  name: '1.2'
 
 authors:
   - Kumaraswamy
