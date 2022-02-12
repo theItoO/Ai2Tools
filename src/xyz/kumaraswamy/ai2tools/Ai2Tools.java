@@ -4,6 +4,7 @@ import android.util.Log;
 import com.google.appinventor.components.annotations.SimpleFunction;
 import com.google.appinventor.components.runtime.AndroidNonvisibleComponent;
 import com.google.appinventor.components.runtime.ComponentContainer;
+import com.google.appinventor.components.runtime.ReplForm;
 import com.google.appinventor.components.runtime.errors.IllegalArgumentError;
 import gnu.expr.Language;
 import gnu.kawa.functions.Apply;
@@ -13,6 +14,7 @@ import gnu.mapping.Environment;
 import gnu.mapping.ProcedureN;
 import gnu.mapping.SimpleSymbol;
 import gnu.mapping.Symbol;
+import kawa.standard.Scheme;
 
 import java.lang.reflect.Field;
 
@@ -50,7 +52,7 @@ public class Ai2Tools extends AndroidNonvisibleComponent {
     }
 
     public void doEventCall(final String procedureName, Object[] arguments) throws Throwable {
-        ProcedureN fun = lookupProcedureInForm(procedureName);
+        ProcedureN fun = lookupProcedure(procedureName);
         if (fun == null) {
             throw new IllegalArgumentError("Procedure not found");
         }
@@ -58,9 +60,17 @@ public class Ai2Tools extends AndroidNonvisibleComponent {
     }
 
     /**
-     * This method is taken from Procedures
-     * extension written by Ewpatton
+     * Methods are taken from Procedure extension
+     * written by Ewpatton
      */
+
+    private ProcedureN lookupProcedure(String procedureName) {
+        if (form instanceof ReplForm) {
+            return lookupProcedureInRepl(procedureName);
+        } else {
+            return lookupProcedureInForm(procedureName);
+        }
+    }
 
     private ProcedureN lookupProcedureInForm(String procedureName) {
         try {
@@ -82,6 +92,24 @@ public class Ai2Tools extends AndroidNonvisibleComponent {
                 // here so that the return value of this is the lambda implementing the blocks logic.
                 // See runtime.scm#665
                 return (ProcedureN) ((ProcedureN) result).apply0();
+            } else {
+                Log.e(TAG, "Wanted a procedure, but got a " +
+                        (result == null ? "null" : result.getClass().toString()));
+            }
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+        }
+        return null;
+    }
+
+    private ProcedureN lookupProcedureInRepl(String procedureName) {
+        Scheme lang = Scheme.getInstance();
+        try {
+            // Since we're in the REPL, we can cheat and invoke the Scheme interpreter to get the method.
+            Object result = lang.eval("(begin (require <com.google.youngandroid.runtime>)(get-var p$" +
+                    procedureName + "))");
+            if (result instanceof ProcedureN) {
+                return (ProcedureN) result;
             } else {
                 Log.e(TAG, "Wanted a procedure, but got a " +
                         (result == null ? "null" : result.getClass().toString()));
