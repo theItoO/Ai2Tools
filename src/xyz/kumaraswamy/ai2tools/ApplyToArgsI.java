@@ -41,7 +41,7 @@ public class ApplyToArgsI extends gnu.kawa.functions.ApplyToArgs {
                 Log.d(TAG, "Event raised of name '" + applyMethod.getEventName() +
                         "' of component " + component + " and args " + arguments[2]);
 
-                applyMethod.getAi2Tools().doEventCall("event", arguments);
+                applyMethod.getAi2Tools().doEventCall(arguments);
             }
         }
 

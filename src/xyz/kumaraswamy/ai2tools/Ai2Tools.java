@@ -21,6 +21,7 @@ import java.lang.reflect.Field;
 public class Ai2Tools extends AndroidNonvisibleComponent {
 
     private static final String TAG = "Ai2Tools";
+    private ProcedureN fun;
 
     public Ai2Tools(ComponentContainer container) {
         super(container.$form());
@@ -28,6 +29,8 @@ public class Ai2Tools extends AndroidNonvisibleComponent {
 
     @SimpleFunction(description = "Initializes")
     public void InitializeI() throws Exception {
+        fun = lookupProcedure();
+
         Class<?> clazz = Class.forName("kawa.standard.Scheme");
         Field field = clazz.getField("apply");
 
@@ -51,8 +54,7 @@ public class Ai2Tools extends AndroidNonvisibleComponent {
         envSetI.set(form, new Env(environment, this));
     }
 
-    public void doEventCall(final String procedureName, Object[] arguments) throws Throwable {
-        ProcedureN fun = lookupProcedure(procedureName);
+    public void doEventCall(Object[] arguments) throws Throwable {
         if (fun == null) {
             throw new IllegalArgumentError("Procedure not found");
         }
@@ -64,19 +66,19 @@ public class Ai2Tools extends AndroidNonvisibleComponent {
      * written by Ewpatton
      */
 
-    private ProcedureN lookupProcedure(String procedureName) {
+    private ProcedureN lookupProcedure() {
         if (form instanceof ReplForm) {
-            return lookupProcedureInRepl(procedureName);
+            return lookupProcedureInRepl();
         } else {
-            return lookupProcedureInForm(procedureName);
+            return lookupProcedureInForm();
         }
     }
 
-    private ProcedureN lookupProcedureInForm(String procedureName) {
+    private ProcedureN lookupProcedureInForm() {
         try {
             Field globalVarEnvironment = form.getClass().getField("global$Mnvars$Mnto$Mncreate");
             LList vars = (LList) globalVarEnvironment.get(form);
-            Symbol procSym = new SimpleSymbol("p$" + procedureName);
+            Symbol procSym = new SimpleSymbol("p$" + "event");
             Object result = null;
             for (Object pair : vars) {
                 if (!LList.Empty.equals(pair)) {
@@ -102,12 +104,12 @@ public class Ai2Tools extends AndroidNonvisibleComponent {
         return null;
     }
 
-    private ProcedureN lookupProcedureInRepl(String procedureName) {
+    private ProcedureN lookupProcedureInRepl() {
         Scheme lang = Scheme.getInstance();
         try {
             // Since we're in the REPL, we can cheat and invoke the Scheme interpreter to get the method.
             Object result = lang.eval("(begin (require <com.google.youngandroid.runtime>)(get-var p$" +
-                    procedureName + "))");
+                    "event" + "))");
             if (result instanceof ProcedureN) {
                 return (ProcedureN) result;
             } else {
